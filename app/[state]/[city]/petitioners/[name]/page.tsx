@@ -25,10 +25,13 @@ export default async function PetitionerProfile({
 
   if (!summary) notFound();
 
+  // Pass rate is only meaningful over motions that actually got voted on.
+  // "no_action" items were discussed but never formally voted, so they
+  // shouldn't drag down the pass rate.
   const passRate =
-    summary.motion_count > 0
-      ? Math.round((summary.passed * 100) / summary.motion_count)
-      : 0;
+    summary.decided > 0
+      ? Math.round((summary.passed * 100) / summary.decided)
+      : null;
   const dollar = Number(summary.total_dollar || 0);
 
   return (
@@ -50,7 +53,19 @@ export default async function PetitionerProfile({
 
       <section className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Stat label="Motions filed" value={summary.motion_count.toLocaleString()} />
-        <Stat label="Pass rate" value={`${passRate}%`} />
+        <Stat
+          label="Pass rate"
+          value={
+            passRate === null
+              ? "—"
+              : `${passRate}%`
+          }
+          sub={
+            passRate === null
+              ? "no formal vote yet"
+              : `over ${summary.decided} voted motion${summary.decided === 1 ? "" : "s"}`
+          }
+        />
         <Stat label="Passed" value={summary.passed.toLocaleString()} />
         <Stat
           label="Total $ requested"
@@ -58,12 +73,23 @@ export default async function PetitionerProfile({
         />
       </section>
 
-      {summary.first_seen && summary.last_seen && (
-        <p className="text-xs text-slate-500 mt-3">
-          First filing: {new Date(summary.first_seen).toLocaleDateString()} ·
-          Most recent: {new Date(summary.last_seen).toLocaleDateString()}
-        </p>
-      )}
+      <p className="text-xs text-slate-500 mt-3">
+        {summary.first_seen && summary.last_seen && (
+          <>
+            First filing: {new Date(summary.first_seen).toLocaleDateString()} ·
+            Most recent: {new Date(summary.last_seen).toLocaleDateString()}
+          </>
+        )}
+        {summary.no_action > 0 && (
+          <>
+            {" · "}
+            <span className="text-amber-600">
+              {summary.no_action} discussed without a formal vote (not counted
+              in pass rate)
+            </span>
+          </>
+        )}
+      </p>
 
       <section className="mt-8 rounded-lg border border-slate-300 bg-white shadow-sm p-5">
         <h2 className="text-lg font-semibold text-slate-900 mb-1">
@@ -87,11 +113,12 @@ export default async function PetitionerProfile({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="text-xs text-slate-500 uppercase tracking-wide">{label}</div>
       <div className="text-2xl font-semibold text-slate-900 mt-1">{value}</div>
+      {sub && <div className="text-[10px] text-slate-400 mt-1">{sub}</div>}
     </div>
   );
 }

@@ -22,6 +22,8 @@ export type PetitionerSummary = {
   passed: number;
   failed: number;
   tabled: number;
+  no_action: number;       // discussion items the council never formally voted on
+  decided: number;         // passed + failed — the denominator for pass rate
   first_seen: Date | null;
   last_seen: Date | null;
 };
@@ -37,6 +39,8 @@ export async function getPetitionerSummary(
       COUNT(*) FILTER (WHERE m.outcome = 'passed')::int AS passed,
       COUNT(*) FILTER (WHERE m.outcome = 'failed')::int AS failed,
       COUNT(*) FILTER (WHERE m.outcome = 'tabled')::int AS tabled,
+      COUNT(*) FILTER (WHERE m.outcome = 'no_action')::int AS no_action,
+      COUNT(*) FILTER (WHERE m.outcome IN ('passed', 'failed'))::int AS decided,
       MIN(mtg.meeting_date) AS first_seen,
       MAX(mtg.meeting_date) AS last_seen
     FROM motion m
