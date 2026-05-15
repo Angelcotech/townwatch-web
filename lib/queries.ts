@@ -46,6 +46,7 @@ export type AggregateRow = {
   name: string;
   motions: number;
   official_id: number | null;   // when set, the row links to a profile
+  has_photo: boolean;           // true iff a verified photo exists for the official_id
 };
 
 export type RecentDecision = {
@@ -168,7 +169,8 @@ export async function getTopPetitioners(
   return await sql<AggregateRow[]>`
     SELECT m.petitioner_name AS name,
            COUNT(*)::int AS motions,
-           NULL::int AS official_id
+           NULL::int AS official_id,
+           FALSE AS has_photo
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id
@@ -193,7 +195,14 @@ export async function getTopStaff(
     SELECT m.staff_recommender AS name,
            COUNT(*)::int AS motions,
            (SELECT oa.official_id FROM official_alias oa
-            WHERE oa.alias_name = m.staff_recommender LIMIT 1) AS official_id
+            WHERE oa.alias_name = m.staff_recommender LIMIT 1) AS official_id,
+           EXISTS(
+             SELECT 1 FROM official_photo op
+             WHERE op.official_id =
+               (SELECT oa.official_id FROM official_alias oa
+                WHERE oa.alias_name = m.staff_recommender LIMIT 1)
+               AND op.data_status = 'verified'
+           ) AS has_photo
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id

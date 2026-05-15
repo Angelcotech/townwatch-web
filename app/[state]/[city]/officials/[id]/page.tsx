@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { MotionItem } from "@/components/MotionItem";
 import { getJurisdictionBySlug } from "@/lib/queries";
 import {
   getProfileOfficial,
@@ -133,21 +134,16 @@ export default async function OfficialProfile({
 
       {/* Recommendations — staff only */}
       {isStaff && recommendations.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-3">
+        <section className="mt-8 rounded-lg border border-slate-300 bg-white shadow-sm p-5">
+          <h2 className="text-lg font-semibold text-slate-900 mb-1">
             Motions where {official.first_name || "this staff member"} was the recorded recommender
           </h2>
-          <ul className="space-y-2 text-sm">
+          <p className="text-xs text-slate-500 mb-2">
+            What each motion entailed, in order.
+          </p>
+          <ul>
             {recommendations.map((r) => (
-              <li key={r.motion_id} className="border-b border-slate-100 pb-2">
-                <span className="text-slate-400">
-                  {r.outcome === "passed" ? "✓" : r.outcome === "failed" ? "✗" : "·"}
-                </span>{" "}
-                <span className="italic text-slate-500">
-                  {new Date(r.meeting_date).toLocaleDateString()}
-                </span>{" "}
-                — <span className="text-slate-700">{r.title}</span>
-              </li>
+              <MotionItem key={r.id} motion={r} />
             ))}
           </ul>
         </section>

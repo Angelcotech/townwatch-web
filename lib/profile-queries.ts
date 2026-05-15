@@ -16,10 +16,17 @@ export type ProfileOfficial = {
 };
 
 export type StaffRecommendation = {
-  motion_id: number;
+  id: number;
   title: string;
+  description: string | null;
+  discussion_summary: string | null;
   outcome: string;
+  motion_type: string;
+  dollar_amount: number | null;
   meeting_date: Date;
+  body_name: string;
+  vote_tally_yes: number;
+  vote_tally_no: number;
 };
 
 export type ProfileTerm = {
@@ -112,14 +119,22 @@ export async function getProfileFindings(
 
 export async function getStaffRecommendations(
   officialId: number,
-  limit = 20
+  limit = 50
 ): Promise<StaffRecommendation[]> {
   // Motions where this person is the recorded staff_recommender. We match
   // either by exact canonical_name or by any alias pointing to this official.
   return await sql<StaffRecommendation[]>`
-    SELECT m.id AS motion_id, m.title, m.outcome, mtg.meeting_date
+    SELECT m.id, m.title, m.description, m.discussion_summary,
+           COALESCE(m.outcome, '—') AS outcome,
+           COALESCE(m.motion_type, 'other') AS motion_type,
+           m.dollar_amount,
+           mtg.meeting_date,
+           gb.name AS body_name,
+           COALESCE(m.vote_tally_yes, 0) AS vote_tally_yes,
+           COALESCE(m.vote_tally_no, 0) AS vote_tally_no
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
+    JOIN governing_body gb ON gb.id = mtg.governing_body_id
     WHERE m.data_status = 'clean'
       AND m.staff_recommender IN (
         SELECT canonical_name FROM official WHERE id = ${officialId}

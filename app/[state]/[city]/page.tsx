@@ -11,7 +11,7 @@ import {
 import { CitizensTier } from "@/components/CitizensTier";
 import { CycleConnector } from "@/components/CycleConnector";
 import { CouncilCard, VacantSeatCard } from "@/components/CouncilCard";
-import { UpstreamModule } from "@/components/UpstreamModule";
+import { InfluenceBubbles } from "@/components/InfluenceBubbles";
 import { BodyCard } from "@/components/BodyCard";
 import { RecentDecisions } from "@/components/RecentDecisions";
 
@@ -111,21 +111,31 @@ export default async function JurisdictionHome({
           who recommend or draft the response. Most council votes ratify what
           has already been agreed here.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UpstreamModule
-            title="Petitioners"
-            subtitle="petitioners"
-            rows={topPetitioners}
-            state={state}
-            citySlug={city}
-          />
-          <UpstreamModule
-            title="Staff Recommenders"
-            subtitle="staff recommenders"
-            rows={topStaff}
-            state={state}
-            citySlug={city}
-          />
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Petitioners</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              Bubble size = number of motions filed.
+            </p>
+            <InfluenceBubbles
+              rows={topPetitioners}
+              state={state}
+              citySlug={city}
+              kind="petitioner"
+            />
+          </div>
+          <div className="border-t border-slate-200 pt-5">
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Staff Recommenders</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              Bubble size = number of motions recommended. Click a face to see what they recommended.
+            </p>
+            <InfluenceBubbles
+              rows={topStaff}
+              state={state}
+              citySlug={city}
+              kind="staff"
+            />
+          </div>
         </div>
       </section>
 
