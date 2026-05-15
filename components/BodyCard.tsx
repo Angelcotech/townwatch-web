@@ -8,7 +8,7 @@ type Props = {
 
 export function BodyCard({ name, body }: Props) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-slate-300 shadow-sm bg-white p-4">
       <div className="font-semibold text-slate-900">{name}</div>
       {body && body.meetings > 0 ? (
         <>

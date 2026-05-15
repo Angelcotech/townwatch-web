@@ -9,7 +9,7 @@ import {
   getBodies,
 } from "@/lib/queries";
 import { CitizensTier } from "@/components/CitizensTier";
-import { LadderArrow } from "@/components/LadderArrow";
+import { CycleConnector } from "@/components/CycleConnector";
 import { CouncilCard, VacantSeatCard } from "@/components/CouncilCard";
 import { UpstreamModule } from "@/components/UpstreamModule";
 import { BodyCard } from "@/components/BodyCard";
@@ -44,7 +44,7 @@ export default async function JurisdictionHome({
     <main className="max-w-5xl mx-auto px-4 py-8">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900">
-          TownWatch — {jurisdiction.display_name}, {jurisdiction.state_abbr.toUpperCase()}
+          {jurisdiction.display_name}, {jurisdiction.state_abbr.toUpperCase()}
         </h1>
         <p className="text-sm text-slate-600 mt-1">
           {stats.total_officials} officials · {stats.total_motions.toLocaleString()} motions ·{" "}
@@ -60,20 +60,22 @@ export default async function JurisdictionHome({
       {/* Tier 1: Citizens (sovereign) */}
       <CitizensTier population={jurisdiction.population} role="top" />
 
-      <LadderArrow label="elect every 4 years" />
+      <CycleConnector
+        direction="down"
+        label="Citizens elect the mayor and council members every 4 years"
+      />
 
-      {/* Tier 2: Council */}
-      <section>
-        <div className="flex items-baseline justify-between mb-3">
+      {/* Tier 2: Council — grouped */}
+      <section className="rounded-xl border border-slate-300 bg-white shadow-sm p-5">
+        <div className="flex items-baseline justify-between mb-2">
           <h2 className="text-xl font-semibold text-slate-900">Mayor + Council</h2>
+          <span className="text-sm text-slate-500">
+            {stats.unanimity_pct}% unanimous · {stats.voted_count.toLocaleString()} recorded votes
+          </span>
         </div>
         <p className="text-sm text-slate-600 mb-4">
-          <span className="font-medium">
-            {stats.unanimity_pct}% of motions with a recorded vote pass unanimously
-          </span>{" "}
-          ({stats.unanimous_count.toLocaleString()} of{" "}
-          {stats.voted_count.toLocaleString()}). Unanimity is data, not necessarily
-          wrong — but worth knowing.
+          The five elected seats that vote on every motion. Decisions arrive
+          here after staff review and petitioner request.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           <VacantSeatCard
@@ -91,29 +93,49 @@ export default async function JurisdictionHome({
         </div>
       </section>
 
-      <LadderArrow label="ratifies / votes on what arrives at the agenda" />
+      <CycleConnector
+        direction="up"
+        label="Petitioners file requests; staff prepare recommendations. Both flow upward — most motions are shaped here before the council ever votes."
+      />
 
-      {/* Tier 3: Petitioners + Staff */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <UpstreamModule
-          title="Petitioners"
-          subtitle="petitioners"
-          rows={topPetitioners}
-        />
-        <UpstreamModule
-          title="Staff Recommenders"
-          subtitle="staff recommenders"
-          rows={topStaff}
-        />
-      </div>
-
-      <LadderArrow label="shape decisions before the council votes" />
-
-      {/* Tier 4: Appointed bodies */}
-      <section>
-        <h2 className="text-xl font-semibold text-slate-900 mb-3">Appointed Bodies</h2>
+      {/* Tier 3: Petitioners + Staff — grouped together as "upstream" */}
+      <section className="rounded-xl border border-slate-300 bg-white shadow-sm p-5">
+        <h2 className="text-xl font-semibold text-slate-900 mb-2">
+          Upstream{" "}
+          <span className="text-xl font-semibold text-slate-500">
+            — where decisions are actually shaped
+          </span>
+        </h2>
         <p className="text-sm text-slate-600 mb-4">
-          Authority delegated by the council to recommend zoning, planning, and appeals decisions.
+          The people and entities that bring requests forward and the staff
+          who recommend or draft the response. Most council votes ratify what
+          has already been agreed here.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <UpstreamModule
+            title="Petitioners"
+            subtitle="petitioners"
+            rows={topPetitioners}
+          />
+          <UpstreamModule
+            title="Staff Recommenders"
+            subtitle="staff recommenders"
+            rows={topStaff}
+          />
+        </div>
+      </section>
+
+      <CycleConnector
+        direction="bidir"
+        label="The council appoints these bodies; the bodies recommend back to the council, which votes."
+      />
+
+      {/* Tier 4: Appointed bodies — grouped */}
+      <section className="rounded-xl border border-slate-300 bg-white shadow-sm p-5">
+        <h2 className="text-xl font-semibold text-slate-900 mb-2">Appointed Bodies</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          Authority delegated by the council to recommend zoning, planning,
+          and appeals decisions back to it.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {COMMON_BODIES.map((name) => (
@@ -122,13 +144,24 @@ export default async function JurisdictionHome({
         </div>
       </section>
 
-      <LadderArrow label="recommend back to council" />
+      <CycleConnector
+        direction="down"
+        label="Once the council votes, motions become enacted decisions"
+      />
 
       <RecentDecisions decisions={recent} />
 
-      <LadderArrow label="affects daily life" />
+      <CycleConnector
+        direction="down"
+        label="Enacted decisions affect daily life in the city"
+      />
 
       <CitizensTier population={jurisdiction.population} role="bottom" />
+
+      <CycleConnector
+        direction="loop"
+        label="…and the cycle restarts at the next election — citizens vote, the council changes (or doesn't), and the flow above begins again."
+      />
 
       <footer className="mt-10 pt-6 border-t border-slate-200 text-xs text-slate-500">
         TownWatch indexes records that local governments publish. Coverage may be

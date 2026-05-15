@@ -80,6 +80,18 @@ export default async function OfficialProfile({
         </div>
       </header>
 
+      {official.bio_text && (
+        <section className="mt-6 rounded-lg border border-slate-300 bg-white shadow-sm p-5">
+          <h2 className="text-lg font-semibold text-slate-900 mb-2">Biography</h2>
+          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+            {official.bio_text}
+          </p>
+          <p className="text-xs text-slate-400 mt-3 italic">
+            Source: cityofgrovetown.com
+          </p>
+        </section>
+      )}
+
       {/* Headline metrics */}
       <section className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Stat label="Total votes" value={totalVotes.toLocaleString()} />

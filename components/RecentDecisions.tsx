@@ -3,14 +3,14 @@ import type { RecentDecision } from "@/lib/queries";
 export function RecentDecisions({ decisions }: { decisions: RecentDecision[] }) {
   if (decisions.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="rounded-lg border border-slate-300 shadow-sm bg-white p-5">
         <h3 className="text-lg font-semibold text-slate-900">Recent Decisions Enacted</h3>
         <p className="text-sm italic text-slate-500 mt-2">No published decisions yet.</p>
       </div>
     );
   }
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5">
+    <div className="rounded-lg border border-slate-300 shadow-sm bg-white p-5">
       <h3 className="text-lg font-semibold text-slate-900">Recent Decisions Enacted</h3>
       <ul className="mt-3 space-y-2 text-sm">
         {decisions.map((d) => {

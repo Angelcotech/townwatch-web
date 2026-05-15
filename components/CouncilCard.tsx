@@ -10,14 +10,15 @@ type Props = {
 };
 
 export function CouncilCard({ official, state, citySlug }: Props) {
-  const seat = official.current_seat ?? "—";
-  const isProTem = /pro\s*tem/i.test(seat);
-  const proTemBadge = isProTem ? " · Mayor Pro-Tem" : "";
+  // Prefer the city's displayed title ("Mayor Pro Tem", "Councilmember")
+  // over the formal seat name ("Council Member 1") when available.
+  const titleLine =
+    official.display_title || official.current_seat || "—";
 
   return (
     <Link
       href={`/${state}/${citySlug}/officials/${official.id}`}
-      className="block rounded-lg border border-slate-200 p-4 hover:border-slate-400 hover:shadow-sm transition bg-white"
+      className="block rounded-lg border border-slate-300 shadow-sm hover:shadow-md hover:border-slate-500 p-4 transition bg-white"
     >
       <div className="flex justify-center">
         <Avatar
@@ -30,17 +31,19 @@ export function CouncilCard({ official, state, citySlug }: Props) {
         {official.canonical_name}
       </div>
       <div className="text-xs text-slate-600 text-center mt-1">
-        {seat}{proTemBadge}
+        {titleLine}
       </div>
       <GapLine label="term end date" />
-      <GapLine label="direct email" />
+      <div className="text-xs italic text-slate-400 mt-1">
+        no direct email published by the city
+      </div>
     </Link>
   );
 }
 
 export function VacantSeatCard({ label = "Mayor", note }: { label?: string; note?: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 p-4 bg-slate-50">
+    <div className="rounded-lg border border-dashed border-slate-400 shadow-sm p-4 bg-slate-50">
       <div className="flex justify-center">
         <Avatar name="?" size={96} />
       </div>

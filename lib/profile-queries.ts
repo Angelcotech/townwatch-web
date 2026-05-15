@@ -11,6 +11,7 @@ export type ProfileOfficial = {
   phone: string | null;
   official_website: string | null;
   bio_text: string | null;
+  display_title: string | null;
 };
 
 export type ProfileTerm = {
@@ -44,7 +45,7 @@ export async function getProfileOfficial(
 ): Promise<ProfileOfficial | null> {
   const rows = await sql<ProfileOfficial[]>`
     SELECT id, canonical_name, first_name, last_name, email, phone,
-           official_website, bio_text
+           official_website, bio_text, display_title
     FROM official
     WHERE id = ${officialId}
     LIMIT 1

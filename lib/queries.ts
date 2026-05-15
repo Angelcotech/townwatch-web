@@ -24,6 +24,7 @@ export type Official = {
   email: string | null;
   phone: string | null;
   official_website: string | null;
+  display_title: string | null;
   is_current: boolean;
   current_seat: string | null;
   votes: number;
@@ -134,7 +135,7 @@ export async function getCurrentCouncil(jurisdictionId: number): Promise<Officia
   return await sql<Official[]>`
     SELECT
       o.id, o.canonical_name, o.first_name, o.last_name,
-      o.email, o.phone, o.official_website,
+      o.email, o.phone, o.official_website, o.display_title,
       TRUE AS is_current,
       s.name AS current_seat,
       (SELECT COUNT(*) FROM vote v

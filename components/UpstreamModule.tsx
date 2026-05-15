@@ -8,7 +8,7 @@ type Props = {
 
 export function UpstreamModule({ title, subtitle, rows }: Props) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5">
+    <div className="rounded-lg border border-slate-300 shadow-sm bg-white p-5">
       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
       <p className="text-sm text-slate-600 mt-1">Top {subtitle} by motion count</p>
       <ul className="mt-3 space-y-1 text-sm">
