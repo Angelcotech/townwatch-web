@@ -100,30 +100,16 @@ export default async function OfficialProfile({
         <Stat label="Recusals" value={recusals.toLocaleString()} />
       </section>
 
-      {/* Flagged findings */}
-      {findings.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-3">
-            Findings flagged for this official
-          </h2>
-          <ul className="space-y-3">
-            {findings.map((f, i) => (
-              <li
-                key={i}
-                className="rounded-lg border border-amber-200 bg-amber-50 p-4"
-              >
-                <p className="font-medium text-slate-900">{f.title}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  pattern: <code>{f.pattern_id}</code> · severity {f.severity}
-                </p>
-                {f.explanation && (
-                  <p className="text-sm text-slate-700 mt-2">{f.explanation}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/*
+        Public profile pages deliberately do NOT display individual-level
+        inferential findings (e.g., recusal_absence). Those are research
+        hypotheses, not data — and surfacing them under a named person's
+        profile crosses the line from presentation to accusation.
+
+        Findings remain in the DB for operator-side research and the future
+        operator dashboard. System-level descriptive stats (e.g., the body's
+        unanimity rate) appear on the jurisdiction home, framed as data.
+      */}
 
       {/* Voting record breakdown */}
       {breakdown.length > 0 && (
