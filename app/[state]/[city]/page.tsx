@@ -163,7 +163,13 @@ export default async function JurisdictionHome({
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {COMMON_BODIES.map((name) => (
-            <BodyCard key={name} name={name} body={bodiesByName.get(name)} />
+            <BodyCard
+              key={name}
+              name={name}
+              body={bodiesByName.get(name)}
+              state={state}
+              citySlug={city}
+            />
           ))}
         </div>
       </section>
