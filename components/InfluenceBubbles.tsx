@@ -57,7 +57,7 @@ export function InfluenceBubbles({ rows, state, citySlug, kind }: Props) {
   const maxCount = Math.max(...rows.map((r) => r.motions));
 
   return (
-    <div className="flex flex-wrap items-end justify-start gap-x-5 gap-y-4 py-2">
+    <div className="flex flex-wrap items-start justify-start gap-x-5 gap-y-4 py-2">
       {rows.map((r) => {
         const radius = radiusFor(r.motions, maxCount);
         const diameter = radius * 2;
@@ -69,43 +69,52 @@ export function InfluenceBubbles({ rows, state, citySlug, kind }: Props) {
             : null;
 
         const bubble = (
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center" style={{ width: Math.max(diameter, 100) }}>
+            {/* Fixed-height row reserved for the LARGEST possible bubble.
+                Smaller bubbles sit centered inside this slot so the row
+                of labels below stays perfectly aligned across the grid. */}
             <div
-              className="rounded-full overflow-hidden flex items-center justify-center text-white font-semibold shadow-sm"
-              style={{
-                width: diameter,
-                height: diameter,
-                backgroundColor: hashColor(r.name),
-                fontSize: Math.max(11, Math.round(radius * 0.42)),
-              }}
-              title={`${r.name} — ${r.motions} motion${r.motions === 1 ? "" : "s"}`}
+              className="flex items-center justify-center"
+              style={{ height: MAX_RADIUS * 2 }}
             >
-              {r.has_photo && r.official_id ? (
-                <img
-                  src={`/api/photo/${r.official_id}`}
-                  alt={r.name}
-                  width={diameter}
-                  height={diameter}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <span>{initials(r.name)}</span>
-              )}
+              <div
+                className="rounded-full overflow-hidden flex items-center justify-center text-white font-semibold shadow-sm"
+                style={{
+                  width: diameter,
+                  height: diameter,
+                  backgroundColor: hashColor(r.name),
+                  fontSize: Math.max(11, Math.round(radius * 0.42)),
+                }}
+                title={`${r.name} — ${r.motions} motion${r.motions === 1 ? "" : "s"}`}
+              >
+                {r.has_photo && r.official_id ? (
+                  <img
+                    src={`/api/photo/${r.official_id}`}
+                    alt={r.name}
+                    width={diameter}
+                    height={diameter}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <span>{initials(r.name)}</span>
+                )}
+              </div>
             </div>
-            <div
-              className="mt-2 text-xs font-medium text-slate-700"
-              style={{ maxWidth: Math.max(diameter, 88) }}
-            >
+            <div className="mt-2 text-xs font-medium text-slate-700 leading-snug">
               {r.name.length > 28 ? r.name.slice(0, 25) + "…" : r.name}
             </div>
             <div className="text-[10px] text-slate-500 leading-tight">
               {r.motions} motion{r.motions === 1 ? "" : "s"}
             </div>
-            {!r.is_active && (
-              <div className="mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-semibold bg-slate-200 text-slate-600 leading-none">
-                Former
-              </div>
-            )}
+            {/* Tag row — always reserved as its own row. Empty when active
+                so vertical layout stays consistent across the grid. */}
+            <div className="mt-2 h-5 flex items-center justify-center">
+              {!r.is_active && (
+                <span className="inline-block px-1.5 py-0.5 rounded border border-slate-400 text-[9px] uppercase tracking-wider font-semibold text-slate-600 bg-white leading-none">
+                  Former
+                </span>
+              )}
+            </div>
           </div>
         );
 

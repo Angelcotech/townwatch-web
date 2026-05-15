@@ -163,7 +163,7 @@ export async function getCurrentCouncil(jurisdictionId: number): Promise<Officia
 
 export async function getTopPetitioners(
   jurisdictionId: number,
-  limit = 5
+  limit = 200
 ): Promise<AggregateRow[]> {
   // Petitioners are free-text right now (no entity table yet), so they
   // can't link to a profile. We return official_id=NULL.
@@ -187,7 +187,7 @@ export async function getTopPetitioners(
 
 export async function getTopStaff(
   jurisdictionId: number,
-  limit = 5
+  limit = 100
 ): Promise<AggregateRow[]> {
   // Free-text staff_recommender values vary their title prefix wildly
   // ("Finance Director Bradley Smith" vs "Director of Finance/Asst. City
