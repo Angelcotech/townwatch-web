@@ -187,30 +187,39 @@ export async function getTopStaff(
   jurisdictionId: number,
   limit = 5
 ): Promise<AggregateRow[]> {
-  // Staff names live both as free-text on motions AND as resolved
-  // official_alias rows (via the staff scraper). When we can match the
-  // name to an alias, we surface the official_id so the row links to a
-  // profile page.
+  // staff_recommender is free-text on motions ("City Administrator John
+  // Waller", "Finance Director Bradley Smith"). The exact form varies, so
+  // alias-exact-match catches almost nothing. Instead we substring-match
+  // canonical_name within the captured string — "Bradley Smith" lives
+  // inside almost every form the extractor produces for him.
   return await sql<AggregateRow[]>`
-    SELECT m.staff_recommender AS name,
-           COUNT(*)::int AS motions,
-           (SELECT oa.official_id FROM official_alias oa
-            WHERE oa.alias_name = m.staff_recommender LIMIT 1) AS official_id,
-           EXISTS(
-             SELECT 1 FROM official_photo op
-             WHERE op.official_id =
-               (SELECT oa.official_id FROM official_alias oa
-                WHERE oa.alias_name = m.staff_recommender LIMIT 1)
-               AND op.data_status = 'verified'
-           ) AS has_photo
-    FROM motion m
-    JOIN meeting mtg ON mtg.id = m.meeting_id
-    JOIN governing_body gb ON gb.id = mtg.governing_body_id
-    WHERE m.staff_recommender IS NOT NULL
-      AND m.data_status = 'clean'
-      AND gb.jurisdiction_id = ${jurisdictionId}
-    GROUP BY m.staff_recommender
-    ORDER BY motions DESC
+    WITH resolved AS (
+      SELECT m.staff_recommender AS name,
+             COUNT(*)::int AS motions,
+             (SELECT o.id FROM official o
+              WHERE LENGTH(o.canonical_name) >= 8
+                AND POSITION(LOWER(o.canonical_name) IN LOWER(m.staff_recommender)) > 0
+              ORDER BY LENGTH(o.canonical_name) DESC
+              LIMIT 1) AS official_id
+      FROM motion m
+      JOIN meeting mtg ON mtg.id = m.meeting_id
+      JOIN governing_body gb ON gb.id = mtg.governing_body_id
+      WHERE m.staff_recommender IS NOT NULL
+        AND m.data_status = 'clean'
+        AND gb.jurisdiction_id = ${jurisdictionId}
+      GROUP BY m.staff_recommender
+    )
+    SELECT
+      r.name,
+      r.motions,
+      r.official_id,
+      EXISTS(
+        SELECT 1 FROM official_photo op
+        WHERE op.official_id = r.official_id
+          AND op.data_status = 'verified'
+      ) AS has_photo
+    FROM resolved r
+    ORDER BY r.motions DESC
     LIMIT ${limit}
   `;
 }

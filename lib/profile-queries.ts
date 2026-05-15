@@ -121,9 +121,15 @@ export async function getStaffRecommendations(
   officialId: number,
   limit = 50
 ): Promise<StaffRecommendation[]> {
-  // Motions where this person is the recorded staff_recommender. We match
-  // either by exact canonical_name or by any alias pointing to this official.
+  // Substring match: if this official's canonical_name appears anywhere
+  // inside m.staff_recommender, attribute the motion to them. The free-text
+  // recommender field uses varied title prefixings ("Finance Director Bradley
+  // Smith", "Bradley Smith, Finance Director", etc.) — an exact match
+  // misses almost everything.
   return await sql<StaffRecommendation[]>`
+    WITH me AS (
+      SELECT canonical_name FROM official WHERE id = ${officialId}
+    )
     SELECT m.id, m.title, m.description, m.discussion_summary,
            COALESCE(m.outcome, '—') AS outcome,
            COALESCE(m.motion_type, 'other') AS motion_type,
@@ -135,12 +141,11 @@ export async function getStaffRecommendations(
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id
+    CROSS JOIN me
     WHERE m.data_status = 'clean'
-      AND m.staff_recommender IN (
-        SELECT canonical_name FROM official WHERE id = ${officialId}
-        UNION
-        SELECT alias_name FROM official_alias WHERE official_id = ${officialId}
-      )
+      AND m.staff_recommender IS NOT NULL
+      AND LENGTH(me.canonical_name) >= 8
+      AND POSITION(LOWER(me.canonical_name) IN LOWER(m.staff_recommender)) > 0
     ORDER BY mtg.meeting_date DESC, m.id DESC
     LIMIT ${limit}
   `;
