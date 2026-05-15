@@ -47,6 +47,7 @@ export type AggregateRow = {
   motions: number;
   official_id: number | null;   // when set, the row links to a profile
   has_photo: boolean;           // true iff a verified photo exists for the official_id
+  is_active: boolean;           // true if the linked official is on the current roster
 };
 
 export type RecentDecision = {
@@ -170,7 +171,8 @@ export async function getTopPetitioners(
     SELECT m.petitioner_name AS name,
            COUNT(*)::int AS motions,
            NULL::int AS official_id,
-           FALSE AS has_photo
+           FALSE AS has_photo,
+           TRUE AS is_active
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id
@@ -187,20 +189,20 @@ export async function getTopStaff(
   jurisdictionId: number,
   limit = 5
 ): Promise<AggregateRow[]> {
-  // staff_recommender is free-text on motions ("City Administrator John
-  // Waller", "Finance Director Bradley Smith"). The exact form varies, so
-  // alias-exact-match catches almost nothing. Instead we substring-match
-  // canonical_name within the captured string — "Bradley Smith" lives
-  // inside almost every form the extractor produces for him.
+  // Free-text staff_recommender values vary their title prefix wildly
+  // ("Finance Director Bradley Smith" vs "Director of Finance/Asst. City
+  // Administrator Bradley Smith"). Substring-match the canonical name to
+  // the same official, then COLLAPSE multiple raw forms into a single
+  // bubble per official_id (so Bradley Smith doesn't show twice).
   return await sql<AggregateRow[]>`
     WITH resolved AS (
-      SELECT m.staff_recommender AS name,
-             COUNT(*)::int AS motions,
+      SELECT m.staff_recommender AS raw,
              (SELECT o.id FROM official o
               WHERE LENGTH(o.canonical_name) >= 8
                 AND POSITION(LOWER(o.canonical_name) IN LOWER(m.staff_recommender)) > 0
               ORDER BY LENGTH(o.canonical_name) DESC
-              LIMIT 1) AS official_id
+              LIMIT 1) AS official_id,
+             COUNT(*)::int AS motions
       FROM motion m
       JOIN meeting mtg ON mtg.id = m.meeting_id
       JOIN governing_body gb ON gb.id = mtg.governing_body_id
@@ -208,18 +210,35 @@ export async function getTopStaff(
         AND m.data_status = 'clean'
         AND gb.jurisdiction_id = ${jurisdictionId}
       GROUP BY m.staff_recommender
+    ),
+    -- Collapse: resolved rows merge by official_id (so two title variants of
+    -- the same person become one bubble); unresolved rows stay distinct.
+    collapsed AS (
+      SELECT
+        official_id,
+        CASE WHEN official_id IS NULL THEN MIN(raw) ELSE NULL END AS raw_name,
+        SUM(motions)::int AS motions
+      FROM resolved
+      GROUP BY official_id, CASE WHEN official_id IS NULL THEN raw ELSE NULL END
     )
     SELECT
-      r.name,
-      r.motions,
-      r.official_id,
+      COALESCE(
+        (SELECT canonical_name FROM official WHERE id = c.official_id),
+        c.raw_name
+      ) AS name,
+      c.motions,
+      c.official_id,
       EXISTS(
         SELECT 1 FROM official_photo op
-        WHERE op.official_id = r.official_id
+        WHERE op.official_id = c.official_id
           AND op.data_status = 'verified'
-      ) AS has_photo
-    FROM resolved r
-    ORDER BY r.motions DESC
+      ) AS has_photo,
+      COALESCE(
+        (SELECT o.is_active FROM official o WHERE o.id = c.official_id),
+        TRUE
+      ) AS is_active
+    FROM collapsed c
+    ORDER BY c.motions DESC
     LIMIT ${limit}
   `;
 }

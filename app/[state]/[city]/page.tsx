@@ -12,6 +12,7 @@ import { CitizensTier } from "@/components/CitizensTier";
 import { CycleConnector } from "@/components/CycleConnector";
 import { CouncilCard, VacantSeatCard } from "@/components/CouncilCard";
 import { InfluenceBubbles } from "@/components/InfluenceBubbles";
+import { PetitionerList } from "@/components/PetitionerList";
 import { BodyCard } from "@/components/BodyCard";
 import { RecentDecisions } from "@/components/RecentDecisions";
 
@@ -113,18 +114,6 @@ export default async function JurisdictionHome({
         </p>
         <div className="space-y-6">
           <div>
-            <h3 className="text-base font-semibold text-slate-900 mb-1">Petitioners</h3>
-            <p className="text-xs text-slate-500 mb-3">
-              Bubble size = number of motions filed.
-            </p>
-            <InfluenceBubbles
-              rows={topPetitioners}
-              state={state}
-              citySlug={city}
-              kind="petitioner"
-            />
-          </div>
-          <div className="border-t border-slate-200 pt-5">
             <h3 className="text-base font-semibold text-slate-900 mb-1">Staff Recommenders</h3>
             <p className="text-xs text-slate-500 mb-3">
               Bubble size = number of motions recommended. Click a face to see what they recommended.
@@ -134,6 +123,18 @@ export default async function JurisdictionHome({
               state={state}
               citySlug={city}
               kind="staff"
+            />
+          </div>
+          <div className="border-t border-slate-200 pt-5">
+            <h3 className="text-base font-semibold text-slate-900 mb-1">Petitioners</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              External entities that filed motions — developers, businesses, residents.
+              Bar length = relative volume.
+            </p>
+            <PetitionerList
+              rows={topPetitioners}
+              state={state}
+              citySlug={city}
             />
           </div>
         </div>

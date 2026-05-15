@@ -59,9 +59,16 @@ export default async function OfficialProfile({
           size={160}
         />
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-slate-900">
-            {official.canonical_name}
-          </h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold text-slate-900">
+              {official.canonical_name}
+            </h1>
+            {!official.is_active && (
+              <span className="px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold bg-slate-200 text-slate-600">
+                Former
+              </span>
+            )}
+          </div>
           {isStaff && official.display_title ? (
             <p className="text-sm text-slate-600 mt-1">
               {official.display_title} · City of {jurisdiction.display_name} ·

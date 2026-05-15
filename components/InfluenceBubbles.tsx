@@ -101,6 +101,11 @@ export function InfluenceBubbles({ rows, state, citySlug, kind }: Props) {
             <div className="text-[10px] text-slate-500 leading-tight">
               {r.motions} motion{r.motions === 1 ? "" : "s"}
             </div>
+            {!r.is_active && (
+              <div className="mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-semibold bg-slate-200 text-slate-600 leading-none">
+                Former
+              </div>
+            )}
           </div>
         );
 

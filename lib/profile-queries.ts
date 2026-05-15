@@ -13,6 +13,7 @@ export type ProfileOfficial = {
   bio_text: string | null;
   display_title: string | null;
   is_elected: boolean;
+  is_active: boolean;
 };
 
 export type StaffRecommendation = {
@@ -60,7 +61,7 @@ export async function getProfileOfficial(
 ): Promise<ProfileOfficial | null> {
   const rows = await sql<ProfileOfficial[]>`
     SELECT id, canonical_name, first_name, last_name, email, phone,
-           official_website, bio_text, display_title, is_elected
+           official_website, bio_text, display_title, is_elected, is_active
     FROM official
     WHERE id = ${officialId}
     LIMIT 1
