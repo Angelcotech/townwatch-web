@@ -7,6 +7,7 @@ import {
   getProfileTerms,
   getVoteBreakdown,
   getProfileFindings,
+  getStaffRecommendations,
 } from "@/lib/profile-queries";
 
 export default async function OfficialProfile({
@@ -21,14 +22,18 @@ export default async function OfficialProfile({
   const jurisdiction = await getJurisdictionBySlug(state, city);
   if (!jurisdiction) notFound();
 
-  const [official, terms, breakdown, findings] = await Promise.all([
-    getProfileOfficial(officialId),
-    getProfileTerms(officialId),
-    getVoteBreakdown(officialId),
-    getProfileFindings(officialId),
-  ]);
-
+  const official = await getProfileOfficial(officialId);
   if (!official) notFound();
+
+  // Different shape for staff vs elected — staff have recommendations,
+  // not voting records or terms.
+  const isStaff = !official.is_elected;
+  const [terms, breakdown, , recommendations] = await Promise.all([
+    isStaff ? Promise.resolve([]) : getProfileTerms(officialId),
+    isStaff ? Promise.resolve([]) : getVoteBreakdown(officialId),
+    getProfileFindings(officialId),
+    isStaff ? getStaffRecommendations(officialId) : Promise.resolve([]),
+  ]);
 
   const currentTerm = terms.find((t) => t.is_current);
   const totalVotes = breakdown.reduce((s, b) => s + b.total, 0);
@@ -56,7 +61,12 @@ export default async function OfficialProfile({
           <h1 className="text-3xl font-bold text-slate-900">
             {official.canonical_name}
           </h1>
-          {currentTerm ? (
+          {isStaff && official.display_title ? (
+            <p className="text-sm text-slate-600 mt-1">
+              {official.display_title} · City of {jurisdiction.display_name} ·
+              appointed staff
+            </p>
+          ) : currentTerm ? (
             <p className="text-sm text-slate-600 mt-1">
               {currentTerm.seat_name} · {currentTerm.body_name} ·{" "}
               {currentTerm.jurisdiction_name} · current
@@ -92,13 +102,23 @@ export default async function OfficialProfile({
         </section>
       )}
 
-      {/* Headline metrics */}
-      <section className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Stat label="Total votes" value={totalVotes.toLocaleString()} />
-        <Stat label="Yes rate" value={`${yesPct}%`} />
-        <Stat label="No votes" value={noCount.toLocaleString()} />
-        <Stat label="Recusals" value={recusals.toLocaleString()} />
-      </section>
+      {/* Headline metrics — different shape for staff vs elected */}
+      {isStaff ? (
+        <section className="mt-8 grid grid-cols-2 sm:grid-cols-2 gap-4">
+          <Stat label="Motions recommended" value={recommendations.length.toLocaleString()} />
+          <Stat
+            label="Status"
+            value={official.display_title ? "Active staff" : "Staff"}
+          />
+        </section>
+      ) : (
+        <section className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Stat label="Total votes" value={totalVotes.toLocaleString()} />
+          <Stat label="Yes rate" value={`${yesPct}%`} />
+          <Stat label="No votes" value={noCount.toLocaleString()} />
+          <Stat label="Recusals" value={recusals.toLocaleString()} />
+        </section>
+      )}
 
       {/*
         Public profile pages deliberately do NOT display individual-level
@@ -110,6 +130,28 @@ export default async function OfficialProfile({
         operator dashboard. System-level descriptive stats (e.g., the body's
         unanimity rate) appear on the jurisdiction home, framed as data.
       */}
+
+      {/* Recommendations — staff only */}
+      {isStaff && recommendations.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-xl font-semibold text-slate-900 mb-3">
+            Motions where {official.first_name || "this staff member"} was the recorded recommender
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {recommendations.map((r) => (
+              <li key={r.motion_id} className="border-b border-slate-100 pb-2">
+                <span className="text-slate-400">
+                  {r.outcome === "passed" ? "✓" : r.outcome === "failed" ? "✗" : "·"}
+                </span>{" "}
+                <span className="italic text-slate-500">
+                  {new Date(r.meeting_date).toLocaleDateString()}
+                </span>{" "}
+                — <span className="text-slate-700">{r.title}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Voting record breakdown */}
       {breakdown.length > 0 && (

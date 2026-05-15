@@ -45,6 +45,7 @@ export type HomeStats = {
 export type AggregateRow = {
   name: string;
   motions: number;
+  official_id: number | null;   // when set, the row links to a profile
 };
 
 export type RecentDecision = {
@@ -162,8 +163,12 @@ export async function getTopPetitioners(
   jurisdictionId: number,
   limit = 5
 ): Promise<AggregateRow[]> {
+  // Petitioners are free-text right now (no entity table yet), so they
+  // can't link to a profile. We return official_id=NULL.
   return await sql<AggregateRow[]>`
-    SELECT m.petitioner_name AS name, COUNT(*)::int AS motions
+    SELECT m.petitioner_name AS name,
+           COUNT(*)::int AS motions,
+           NULL::int AS official_id
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id
@@ -180,8 +185,15 @@ export async function getTopStaff(
   jurisdictionId: number,
   limit = 5
 ): Promise<AggregateRow[]> {
+  // Staff names live both as free-text on motions AND as resolved
+  // official_alias rows (via the staff scraper). When we can match the
+  // name to an alias, we surface the official_id so the row links to a
+  // profile page.
   return await sql<AggregateRow[]>`
-    SELECT m.staff_recommender AS name, COUNT(*)::int AS motions
+    SELECT m.staff_recommender AS name,
+           COUNT(*)::int AS motions,
+           (SELECT oa.official_id FROM official_alias oa
+            WHERE oa.alias_name = m.staff_recommender LIMIT 1) AS official_id
     FROM motion m
     JOIN meeting mtg ON mtg.id = m.meeting_id
     JOIN governing_body gb ON gb.id = mtg.governing_body_id

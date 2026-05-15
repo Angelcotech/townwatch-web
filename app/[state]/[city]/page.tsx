@@ -116,11 +116,15 @@ export default async function JurisdictionHome({
             title="Petitioners"
             subtitle="petitioners"
             rows={topPetitioners}
+            state={state}
+            citySlug={city}
           />
           <UpstreamModule
             title="Staff Recommenders"
             subtitle="staff recommenders"
             rows={topStaff}
+            state={state}
+            citySlug={city}
           />
         </div>
       </section>

@@ -12,6 +12,14 @@ export type ProfileOfficial = {
   official_website: string | null;
   bio_text: string | null;
   display_title: string | null;
+  is_elected: boolean;
+};
+
+export type StaffRecommendation = {
+  motion_id: number;
+  title: string;
+  outcome: string;
+  meeting_date: Date;
 };
 
 export type ProfileTerm = {
@@ -45,7 +53,7 @@ export async function getProfileOfficial(
 ): Promise<ProfileOfficial | null> {
   const rows = await sql<ProfileOfficial[]>`
     SELECT id, canonical_name, first_name, last_name, email, phone,
-           official_website, bio_text, display_title
+           official_website, bio_text, display_title, is_elected
     FROM official
     WHERE id = ${officialId}
     LIMIT 1
@@ -99,5 +107,26 @@ export async function getProfileFindings(
     WHERE subject_official_id = ${officialId}
       AND pattern_id NOT LIKE 'qa\\_%' ESCAPE '\\'
     ORDER BY severity DESC
+  `;
+}
+
+export async function getStaffRecommendations(
+  officialId: number,
+  limit = 20
+): Promise<StaffRecommendation[]> {
+  // Motions where this person is the recorded staff_recommender. We match
+  // either by exact canonical_name or by any alias pointing to this official.
+  return await sql<StaffRecommendation[]>`
+    SELECT m.id AS motion_id, m.title, m.outcome, mtg.meeting_date
+    FROM motion m
+    JOIN meeting mtg ON mtg.id = m.meeting_id
+    WHERE m.data_status = 'clean'
+      AND m.staff_recommender IN (
+        SELECT canonical_name FROM official WHERE id = ${officialId}
+        UNION
+        SELECT alias_name FROM official_alias WHERE official_id = ${officialId}
+      )
+    ORDER BY mtg.meeting_date DESC, m.id DESC
+    LIMIT ${limit}
   `;
 }
