@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# TownWatch additions
+.env.local
+.dev.vars
+.wrangler/
+.open-next/
+.vercel/
