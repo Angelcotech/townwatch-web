@@ -15,8 +15,8 @@ type Props = {
   kind: "petitioner" | "staff";
 };
 
-const MIN_RADIUS = 32;   // px — even a 1-motion bubble is readable
-const MAX_RADIUS = 70;   // px — keeps the largest from dominating the layout
+const MIN_RADIUS = 24;   // px — even a 1-motion bubble is readable
+const MAX_RADIUS = 52;   // px — keeps the largest from dominating the layout
 
 const PALETTE = [
   "#1E3A8A", "#1E40AF", "#1F2937", "#334155", "#475569", "#0F172A",

@@ -121,7 +121,7 @@ export default async function JurisdictionHome({
               Bubble size = number of motions recommended. Click a face to see what they recommended.
               Scroll for the full list.
             </p>
-            <div className="max-h-[420px] overflow-y-auto rounded-md border border-slate-200 bg-slate-50/50 p-3">
+            <div className="max-h-[260px] overflow-y-auto rounded-md border border-slate-200 bg-slate-50/50 p-3">
               <InfluenceBubbles
                 rows={topStaff}
                 state={state}
@@ -138,7 +138,7 @@ export default async function JurisdictionHome({
               External entities that filed motions — developers, businesses, residents.
               Bar length = relative volume. Scroll for the full list.
             </p>
-            <div className="max-h-[420px] overflow-y-auto rounded-md border border-slate-200 bg-slate-50/50 px-3">
+            <div className="max-h-[260px] overflow-y-auto rounded-md border border-slate-200 bg-slate-50/50 px-3">
               <PetitionerList
                 rows={topPetitioners}
                 state={state}

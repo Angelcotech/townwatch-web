@@ -200,6 +200,7 @@ export async function getTopStaff(
              (SELECT o.id FROM official o
               WHERE LENGTH(o.canonical_name) >= 8
                 AND POSITION(LOWER(o.canonical_name) IN LOWER(m.staff_recommender)) > 0
+                AND o.is_elected = FALSE   -- elected officials don't belong here; data errors
               ORDER BY LENGTH(o.canonical_name) DESC
               LIMIT 1) AS official_id,
              COUNT(*)::int AS motions
@@ -209,6 +210,16 @@ export async function getTopStaff(
       WHERE m.staff_recommender IS NOT NULL
         AND m.data_status = 'clean'
         AND gb.jurisdiction_id = ${jurisdictionId}
+        -- Skip recommender strings that themselves resolve to an elected
+        -- official (council members shouldn't appear as staff recommenders;
+        -- when they do, it's an extraction confusion picked up by the
+        -- qa_official_as_staff_recommender pattern).
+        AND NOT EXISTS (
+          SELECT 1 FROM official o
+          WHERE o.is_elected = TRUE
+            AND LENGTH(o.canonical_name) >= 8
+            AND POSITION(LOWER(o.canonical_name) IN LOWER(m.staff_recommender)) > 0
+        )
       GROUP BY m.staff_recommender
     ),
     -- Collapse: resolved rows merge by official_id (so two title variants of
